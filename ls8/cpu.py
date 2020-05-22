@@ -11,7 +11,6 @@ class CPU:
         self.RAM = [0] * 256
         self.REG = [0] * 8
         self.PC = self.REG[0]
-        self.FLAG = self.REG[4]
         self.FL = 0
         self.E = 0
         self.L = 0
@@ -35,18 +34,6 @@ class CPU:
             lines = f.readlines()
             lines = [line for line in lines if line.startswith('0') or line.startswith('1')]
             program = [int(line[:8], 2) for line in lines]
-
-        # For now, we've just hardcoded a program:
-
-        # program = [
-        #     # From print8.ls8
-        #     0b10000010, # LDI R0,8
-        #     0b00000000,
-        #     0b00001000,
-        #     0b01000111, # PRN R0
-        #     0b00000000,
-        #     0b00000001, # HLT
-        # ]
 
         for instruction in program:
             self.RAM[address] = instruction
@@ -124,6 +111,7 @@ class CPU:
             # _Instruction Register_
             IR = self.RAM[self.PC]
 
+            # _HALT Instruction_ 
             if IR== HLT:
                 self.running == False
                 break
@@ -131,18 +119,22 @@ class CPU:
             operand_a = self.ram_read(self.PC + 1)
             operand_b = self.ram_read(self.PC + 2)
 
+            # _Register Immediate_
             if IR == LDI:
                 self.REG[operand_a] = operand_b
                 self.PC += 3
 
+            # _Print Instruction_
             elif IR == PRN:
                 print(self.REG[operand_a])
                 self.PC += 2
 
+            # _MUL Instruction_
             elif IR == MUL:
                 self.alu("MUL", operand_a, operand_b)
                 self.PC += 3
-
+            
+            # _PUSH Instruction_
             elif IR == PUSH:
                 self.REG[7] -= 1
                 sp = self.REG[7]
@@ -150,7 +142,7 @@ class CPU:
                 self.RAM[sp] = value
                 self.PC += 2
                  
-
+            # _POP Instruction_
             elif IR == POP:
                 sp = self.REG[7]
                 value = self.RAM[sp]
@@ -158,29 +150,28 @@ class CPU:
                 self.REG[7] += 1
                 self.PC += 2 
 
-            # Part of Sprint Challenge CMP
+            # Part of Sprint Challenge JMP
             elif IR == JMP:
                 self.PC = self.REG[operand_a]
 
+            # Part of Sprint Challenge CMP
             elif IR == CMP:
                 self.alu("CMP", operand_a, operand_b)
                 self.PC += 3
             
+            # Part of Sprint Challenge JEQ
             elif IR == JEQ:
                 if self.E == 1:
                     self.PC = self.REG[operand_a]
                 else:
                     self.PC += 2
                 
+            # Part of Sprint Challenge JNE
             elif IR == JNE:
                 if self.E == 0:
                     self.PC = self.REG[operand_a]
                 else:
                     self.PC += 2
-                
-            # Part of Step 4 from Read ME 
-            elif IR == HLT:
-                halted = True
 
             else:
                 print(f"ERROR, not working")
