@@ -2,14 +2,6 @@
 
 import sys
 
-# Variables
-LDI = 0b10000010
-PRN = 0b01000111
-HLT = 0b00000001
-MUL = 0b10100010
-PUSH = 0b01000101
-POP = 0b01000110
-
 class CPU:
     """Main CPU class."""
 
@@ -19,6 +11,12 @@ class CPU:
         self.RAM = [0] * 256
         self.REG = [0] * 8
         self.PC = self.REG[0]
+        self.FLAG = self.REG[4]
+        self.FL = 0
+        self.E = 0
+        self.L = 0
+        self.G = 0
+        self.running = True
     
     # step 2 from Read ME 
     def ram_read(self, address):
@@ -63,10 +61,24 @@ class CPU:
         #elif op == "SUB": etc
 
         # Step 8 from Read ME
-        elif op == MUL:
-                product = self.REG[reg_a] * self.REG[reg_b]
-                self.REG[reg_a] = product
-
+        elif op == "MUL":
+            product = self.REG[reg_a] * self.REG[reg_b]
+            self.REG[reg_a] = product
+                
+        # Sprint Challenge here
+        elif op == "CMP":
+            if self.REG[reg_a] == self.REG[reg_b]:
+                self.E = 1
+                self.L = 0
+                self.G = 0
+            elif self.REG[reg_a] <= self.REG[reg_b]:
+                self.E = 0
+                self.L = 1
+                self.G = 0
+            else:
+                self.E = 0
+                self.L = 0
+                self.G = 1
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -94,12 +106,27 @@ class CPU:
         """Run the CPU."""
         # pass
 
-        # Step 3 from Read ME
-        halted = False
+        # Variables
+        HLT = 0b00000001
+        LDI = 0b10000010
+        PRN = 0b01000111
+        PUSH = 0b01000101
+        POP = 0b01000110
+        MUL = 0b10100010
+        JMP = 0b01010100
+        CMP = 0b10100111
+        JEQ = 0b01010101
+        JNE = 0b01010110
 
-        while not halted:
+        # Step 3 from Read ME
+
+        while self.running:
             # _Instruction Register_
             IR = self.RAM[self.PC]
+
+            if IR== HLT:
+                self.running == False
+                break
 
             operand_a = self.ram_read(self.PC + 1)
             operand_b = self.ram_read(self.PC + 2)
@@ -107,12 +134,13 @@ class CPU:
             if IR == LDI:
                 self.REG[operand_a] = operand_b
                 self.PC += 3
+
             elif IR == PRN:
                 print(self.REG[operand_a])
                 self.PC += 2
-                
+
             elif IR == MUL:
-                self.alu(IR, operand_a, operand_b)
+                self.alu("MUL", operand_a, operand_b)
                 self.PC += 3
 
             elif IR == PUSH:
@@ -129,13 +157,31 @@ class CPU:
                 self.REG[operand_a] = value
                 self.REG[7] += 1
                 self.PC += 2 
+
+            # Part of Sprint Challenge CMP
+            elif IR == JMP:
+                self.PC = self.REG[operand_a]
+
+            elif IR == CMP:
+                self.alu("CMP", operand_a, operand_b)
+                self.PC += 3
+            
+            elif IR == JEQ:
+                if self.E == 1:
+                    self.PC = self.REG[operand_a]
+                else:
+                    self.PC += 2
+                
+            elif IR == JNE:
+                if self.E == 0:
+                    self.PC = self.REG[operand_a]
+                else:
+                    self.PC += 2
                 
             # Part of Step 4 from Read ME 
             elif IR == HLT:
                 halted = True
 
-           
-            
             else:
                 print(f"ERROR, not working")
                 sys.exit(1) 
