@@ -28,35 +28,43 @@ class CPU:
     def HLT(self, operand_a, operand_b):
         return (0, False)
 
+    # Step 5 from Read ME
     def LDI(self, operand_a, operand_b):
         self.reg[operand_a] = operand_b
         return (3, True)
 
+    # Step 6 from Read ME
     def PRN(self, operand_a, operand_b):
         print(self.reg[operand_a])
         return (2, True)
 
+    # Step 6 from Read ME
     def MUL(self, operand_a, operand_b):
         self.alu("MUL", operand_a, operand_b)
         return (3, True)
 
-
-    def load(self):
+    # Step 7 from Read ME
+    def load(self, file_name):
         """Load a program into memory."""
 
         address = 0
 
+        with open(file_name) as f:
+            lines = f.readlines()
+            lines = [line for line in lines if line.startswith('0') or line.startswith('1')]
+            program = [int(line[:8], 2) for line in lines]
+
         # For now, we've just hardcoded a program:
 
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
+        # program = [
+        #     # From print8.ls8
+        #     0b10000010, # LDI R0,8
+        #     0b00000000,
+        #     0b00001000,
+        #     0b01000111, # PRN R0
+        #     0b00000000,
+        #     0b00000001, # HLT
+        # ]
 
         for instruction in program:
             self.RAM[address] = instruction
@@ -69,6 +77,10 @@ class CPU:
         if op == "ADD":
             self.REG[reg_a] += self.REG[reg_b]
         #elif op == "SUB": etc
+        elif op == MUL:
+                product = self.REG[reg_a] * self.REG[reg_b]
+                self.REG[reg_a] = product
+
         else:
             raise Exception("Unsupported ALU operation")
 
