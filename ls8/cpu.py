@@ -2,10 +2,13 @@
 
 import sys
 
+# Variables
 LDI = 0b10000010
 PRN = 0b01000111
 HLT = 0b00000001
 MUL = 0b10100010
+PUSH = 0b01000101
+POP = 0b01000110
 
 class CPU:
     """Main CPU class."""
@@ -23,25 +26,6 @@ class CPU:
 
     def ram_write(self, value, address):
         self.RAM[address] = value 
-
-    # Step 4 from Read ME 
-    def HLT(self, operand_a, operand_b):
-        return (0, False)
-
-    # Step 5 from Read ME
-    def LDI(self, operand_a, operand_b):
-        self.reg[operand_a] = operand_b
-        return (3, True)
-
-    # Step 6 from Read ME
-    def PRN(self, operand_a, operand_b):
-        print(self.reg[operand_a])
-        return (2, True)
-
-    # Step 6 from Read ME
-    def MUL(self, operand_a, operand_b):
-        self.alu("MUL", operand_a, operand_b)
-        return (3, True)
 
     # Step 7 from Read ME
     def load(self, file_name):
@@ -77,6 +61,8 @@ class CPU:
         if op == "ADD":
             self.REG[reg_a] += self.REG[reg_b]
         #elif op == "SUB": etc
+
+        # Step 8 from Read ME
         elif op == MUL:
                 product = self.REG[reg_a] * self.REG[reg_b]
                 self.REG[reg_a] = product
@@ -124,13 +110,32 @@ class CPU:
             elif IR == PRN:
                 print(self.REG[operand_a])
                 self.PC += 2
+                
             elif IR == MUL:
                 self.alu(IR, operand_a, operand_b)
                 self.PC += 3
+
+            elif IR == PUSH:
+                self.REG[7] -= 1
+                sp = self.REG[7]
+                value = self.REG[operand_a]
+                self.RAM[sp] = value
+                self.PC += 2
+                 
+
+            elif IR == POP:
+                sp = self.REG[7]
+                value = self.RAM[sp]
+                self.REG[operand_a] = value
+                self.REG[7] += 1
+                self.PC += 2 
                 
             # Part of Step 4 from Read ME 
             elif IR == HLT:
-                sys.exit(0)
+                halted = True
+
+           
+            
             else:
                 print(f"ERROR, not working")
                 sys.exit(1) 
